@@ -1,6 +1,6 @@
-# Contributing to Fluffle Tools
+# Contributing to Graddit
 
-Thank you for your interest in contributing to Fluffle Tools! This document provides guidelines and instructions for contributing.
+Thank you for your interest in contributing to Graddit! This document provides guidelines and instructions for contributing.
 
 ## Development Process
 
@@ -66,7 +66,7 @@ feat: add dark mode support for PFP generator
 - Ensure existing tests pass
 - Test in both light and dark modes
 - Test responsive layouts
-- Test with different NFT IDs
+- Test voting and authentication flows
 
 ## Documentation
 
@@ -81,14 +81,6 @@ feat: add dark mode support for PFP generator
 - Create a new issue for discussions
 - Tag maintainers for urgent matters
 
-## License and Usage Rights
+## License
 
-By contributing to this project, you agree that your contributions will be licensed under our custom license terms. This means:
-
-1. Your contributions can be used as part of the original Fluffle Tools project
-2. You retain the right to use your contributions for private purposes
-3. You may not redistribute the entire project or substantial portions of it
-4. You may not create derivative works for public distribution
-5. Commercial use of the code is not permitted without explicit permission
-
-Please read the full [LICENSE](LICENSE) file before contributing.
+By contributing to this project, you agree that your contributions will be licensed under the MIT License. Please read the full [LICENSE](LICENSE) file before contributing.
