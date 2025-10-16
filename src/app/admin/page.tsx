@@ -26,6 +26,8 @@ export default function AdminPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [checkingAdmin, setCheckingAdmin] = useState(true);
 
   // Form state
   const [formData, setFormData] = useState({
@@ -40,8 +42,31 @@ export default function AdminPage() {
   });
 
   useEffect(() => {
+    checkAdminStatus();
     fetchColleges();
-  }, []);
+  }, [authenticated, user]);
+
+  const checkAdminStatus = async () => {
+    if (!authenticated || !user?.email?.address) {
+      setCheckingAdmin(false);
+      return;
+    }
+
+    try {
+      const response = await fetch("/api/admin/check", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: user.email.address }),
+      });
+      const data = await response.json();
+      setIsAdmin(data.isAdmin);
+    } catch (error) {
+      console.error("Admin check failed:", error);
+      setIsAdmin(false);
+    } finally {
+      setCheckingAdmin(false);
+    }
+  };
 
   const fetchColleges = async () => {
     try {
@@ -125,6 +150,17 @@ export default function AdminPage() {
     }
   };
 
+  if (checkingAdmin) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mb-4"></div>
+          <p className="text-gray-600 dark:text-gray-400">Checking permissions...</p>
+        </div>
+      </div>
+    );
+  }
+
   if (!authenticated) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -135,6 +171,31 @@ export default function AdminPage() {
           <p className="text-gray-600 dark:text-gray-400">
             Please login to access the admin panel
           </p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!isAdmin) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center max-w-md mx-auto p-6">
+          <div className="text-6xl mb-4">🔒</div>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
+            Access Denied
+          </h1>
+          <p className="text-gray-600 dark:text-gray-400 mb-2">
+            You don't have admin privileges to access this page.
+          </p>
+          <p className="text-sm text-gray-500 dark:text-gray-500">
+            Logged in as: <span className="font-medium">{user?.email?.address}</span>
+          </p>
+          <a 
+            href="/"
+            className="mt-6 inline-block px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
+          >
+            Back to Home
+          </a>
         </div>
       </div>
     );
