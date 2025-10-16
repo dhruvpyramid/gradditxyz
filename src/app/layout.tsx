@@ -12,8 +12,8 @@ export const metadata: Metadata = {
   title: "Graddit - College Rankings by Students",
   description: "Vote for your college and help create fair, student-driven rankings across India",
   icons: {
-    icon: [{ url: "/favicon.ico", sizes: "any" }],
-    apple: [{ url: "/favicon.ico", sizes: "180x180" }],
+    icon: [{ url: "/favico.png", sizes: "any" }],
+    apple: [{ url: "/favico.png", sizes: "180x180" }],
   },
   manifest: "/manifest.json",
   openGraph: {

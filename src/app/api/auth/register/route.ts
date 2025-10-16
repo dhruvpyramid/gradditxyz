@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import crypto from "crypto";
 
+// Allow this specific non-.edu.in email in addition to .edu.in addresses
+const OWNER_EMAIL = "dhruvstar00754@gmail.com";
+
 // Helper function to extract college name from email domain
 function extractCollegeFromEmail(email: string): string {
   const domain = email.split("@")[1].replace(".edu.in", "");
@@ -22,7 +25,8 @@ export async function POST(req: NextRequest) {
   try {
     const { email, collegeName, city, state } = await req.json();
 
-    if (!email || !email.endsWith(".edu.in")) {
+    const isOwner = email?.toLowerCase() === OWNER_EMAIL.toLowerCase();
+    if (!email || (!email.endsWith(".edu.in") && !isOwner)) {
       return NextResponse.json(
         { error: "Must use a valid .edu.in email address" },
         { status: 400 }
@@ -37,7 +41,8 @@ export async function POST(req: NextRequest) {
     }
 
     // Verify college name matches email domain
-    if (!verifyCollegeMatch(email, collegeName)) {
+    // Skip college-domain matching for owner email
+    if (!isOwner && !verifyCollegeMatch(email, collegeName)) {
       return NextResponse.json(
         { error: "College name does not match your email domain. Please provide the correct college name." },
         { status: 400 }
@@ -51,8 +56,8 @@ export async function POST(req: NextRequest) {
 
     if (existingUser) {
       return NextResponse.json(
-        { error: "User already exists" },
-        { status: 400 }
+        { success: true, userId: existingUser.id, hashedUserId: existingUser.hashedUserId },
+        { status: 200 }
       );
     }
 
@@ -66,8 +71,8 @@ export async function POST(req: NextRequest) {
     // Get IP address
     const ipAddress = req.headers.get("x-forwarded-for") || req.headers.get("x-real-ip") || "";
 
-    // Extract college domain for storage
-    const college = extractCollegeFromEmail(email);
+    // Extract college domain for storage (owner uses provided value)
+    const college = isOwner ? collegeName.toUpperCase() : extractCollegeFromEmail(email);
 
     // Create user
     const user = await prisma.user.create({
