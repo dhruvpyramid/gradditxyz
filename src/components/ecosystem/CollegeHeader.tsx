@@ -3,24 +3,14 @@ export function CollegeHeader() {
     <div className="text-center max-w-3xl mx-auto relative">
       <div className="absolute inset-x-0 top-6 -bottom-6 bg-gradient-to-b from-pink-500/10 via-purple-500/5 to-transparent dark:from-pink-500/[0.07] dark:via-purple-500/[0.03] dark:to-transparent blur-2xl -z-10 rounded-[100%]" />
       <div className="relative">
-        <h2 className="text-4xl sm:text-5xl font-bold mb-5 tracking-tight leading-[1.15] relative inline-block">
-          {/* Animated gradient background */}
-          <span className="absolute inset-0 bg-gradient-to-r from-pink-500 via-purple-500 via-indigo-500 to-pink-500 dark:from-pink-400 dark:via-purple-400 dark:via-indigo-400 dark:to-pink-400 bg-clip-text text-transparent animate-gradient-x bg-[length:200%_auto]" />
-          
-          {/* Glowing effect */}
-          <span className="absolute inset-0 blur-2xl bg-gradient-to-r from-pink-500 via-purple-500 to-indigo-500 dark:from-pink-400 dark:via-purple-400 dark:to-indigo-400 opacity-50 animate-pulse" />
-          
-          {/* Main text */}
-          <span className="relative bg-gradient-to-r from-pink-500 via-purple-500 via-indigo-500 to-pink-500 dark:from-pink-400 dark:via-purple-400 dark:via-indigo-400 dark:to-pink-400 bg-clip-text text-transparent animate-gradient-x bg-[length:200%_auto]">
-            College Rankings
-          </span>
+        <h2
+          className="hero-title text-4xl sm:text-5xl font-bold mb-5 tracking-tight leading-[1.15]"
+          style={{ ['--hl-bg' as any]: '#FCC75B' }}
+        >
+          welcome to reddit, but <mark className="hl">for colleges</mark>
         </h2>
         <p className="text-lg sm:text-xl text-gray-600 dark:text-gray-300 leading-relaxed max-w-2xl mx-auto font-light">
-          Vote for colleges using your{" "}
-          <span className="text-gray-900 dark:text-white font-medium">
-            .edu.in email
-          </span>{" "}
-          and help create fair, student-driven rankings across India
+          Help others find their dream college through credibility judged by you — the student community.
         </p>
 
         <div className="flex items-center justify-center gap-8 mt-8">
@@ -50,6 +40,36 @@ export function CollegeHeader() {
           </span>
         </button>
       </div>
+      {/* Scoped highlight styles */}
+      <style jsx>{`
+        .hero-title {
+          line-height: 1.1;
+          font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, Noto Sans,
+            "Apple Color Emoji", "Segoe UI Emoji";
+        }
+        .hero-title .hl {
+          position: relative;
+          display: inline-block;
+          white-space: nowrap;
+          background: none;
+        }
+        .hero-title .hl::before {
+          content: "";
+          position: absolute;
+          z-index: -1;
+          left: -0.15em;
+          right: -0.1em;
+          bottom: 0em;
+          height: 0.6em;
+          background: var(--hl-bg, #FCC75B);
+          border-radius: 2px;
+          transform: skewX(-14deg);
+          transform-origin: left bottom;
+        }
+        :global(.dark) .hero-title {
+          --hl-bg: rgba(255,255,255,0.35);
+        }
+      `}</style>
     </div>
   );
 }
