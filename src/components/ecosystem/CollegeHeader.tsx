@@ -7,7 +7,7 @@ export function CollegeHeader() {
           className="hero-title text-4xl sm:text-5xl font-bold mb-5 tracking-tight leading-[1.15]"
           style={{ ['--hl-bg' as any]: '#FCC75B' }}
         >
-          welcome to reddit, but <mark className="hl">for colleges</mark>
+          Welcome to Reddit, but <mark className="hl">for Colleges</mark>
         </h2>
         <p className="text-lg sm:text-xl text-gray-600 dark:text-gray-300 leading-relaxed max-w-2xl mx-auto font-light">
           Help others find their dream college through credibility judged by you — the student community.
@@ -59,12 +59,13 @@ export function CollegeHeader() {
           z-index: -1;
           left: -0.15em;
           right: -0.1em;
-          bottom: 0em;
-          height: 0.6em;
+          bottom: -0.05em; /* sit slightly below baseline */
+          height: 0.35em;  /* slimmer underline-style highlight */
           background: var(--hl-bg, #FCC75B);
           border-radius: 2px;
           transform: skewX(-14deg);
           transform-origin: left bottom;
+          box-shadow: 0 0 0.5em rgba(0,0,0,0.05);
         }
         :global(.dark) .hero-title {
           --hl-bg: rgba(255,255,255,0.35);
