@@ -1,0 +1,71 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id              String   @id @default(cuid())
+  email           String   @unique
+  emailVerified   Boolean  @default(false)
+  hashedUserId    String   @unique
+  college         String
+  collegeName     String
+  city            String
+  state           String
+  voteCount       Int      @default(0)
+  isBlocked       Boolean  @default(false)
+  blockReason     String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  lastVoteAt      DateTime?
+  ipAddress       String?
+  votes           Vote[]
+}
+
+model College {
+  id          Int      @id @default(autoincrement())
+  name        String   @unique
+  email       String?
+  website     String?
+  twitter     String?
+  description String?
+  category    String
+  city        String
+  state       String
+  score       Float    @default(0)
+  voteCount   Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  votes       Vote[]
+
+  @@index([state])
+  @@index([category])
+  @@index([score])
+}
+
+model Vote {
+  id         Int      @id @default(autoincrement())
+  userId     String
+  collegeId  Int
+  voteType   Int      // +1 for upvote, -1 for downvote
+  weight     Float    // 1.5 for same college, 1.2 for same state, 1.0 otherwise
+  createdAt  DateTime @default(now())
+  ipAddress  String?
+  user       User     @relation(fields: [userId], references: [id])
+  college    College  @relation(fields: [collegeId], references: [id])
+
+  @@unique([userId, collegeId])
+  @@index([userId])
+  @@index([collegeId])
+  @@index([createdAt])
+}
+
+model Admin {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  createdAt DateTime @default(now())
+}
