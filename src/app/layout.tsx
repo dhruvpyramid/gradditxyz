@@ -4,6 +4,7 @@ import "./globals.css";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { Footer } from "@/components/Footer";
 import { PrivyAuthProviderWrapper } from "@/contexts/PrivyAuthContext";
+import { AuthHandler } from "@/components/auth/AuthHandler";
 import { Toaster } from "sonner";
 
 const inter = Inter({ subsets: ["latin"] });
@@ -63,6 +64,7 @@ export default function RootLayout({
       <body className={inter.className}>
         <ThemeProvider>
           <PrivyAuthProviderWrapper>
+            <AuthHandler />
             <div className="relative min-h-screen antialiased bg-background text-foreground">
               {children}
               <Footer />

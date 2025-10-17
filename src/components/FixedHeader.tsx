@@ -2,14 +2,12 @@
 
 import { useState, useRef, useEffect } from "react";
 import { usePrivy } from "@privy-io/react-auth";
-import { LoginModal } from "./auth/LoginModal";
 import { ThemeToggle } from "./ThemeToggle";
 
 export function FixedHeader() {
-  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
-  const { authenticated, user, logout } = usePrivy();
+  const { authenticated, user, logout, login } = usePrivy();
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -98,7 +96,7 @@ export function FixedHeader() {
                   </div>
                 ) : (
                   <button
-                    onClick={() => setIsLoginModalOpen(true)}
+                    onClick={login}
                     className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white text-sm font-medium transition-all shadow-lg shadow-blue-500/25 hover:shadow-xl hover:shadow-blue-500/40"
                   >
                     Login / Sign Up
@@ -118,8 +116,6 @@ export function FixedHeader() {
 
       {/* Spacer */}
       <div className="h-20" />
-
-      <LoginModal isOpen={isLoginModalOpen} onClose={() => setIsLoginModalOpen(false)} />
     </>
   );
 }
