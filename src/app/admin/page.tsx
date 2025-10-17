@@ -3,7 +3,8 @@
 import { useState, useEffect } from "react";
 import { usePrivy } from "@privy-io/react-auth";
 import { INDIAN_STATES, COLLEGE_CATEGORIES } from "@/data/indian-states";
-import { Trash2, Plus } from "lucide-react";
+import { Trash2, Plus, RefreshCw, Users } from "lucide-react";
+import { toast } from "sonner";
 
 interface College {
   id: number;
@@ -19,15 +20,31 @@ interface College {
   voteCount: number;
 }
 
+interface User {
+  id: string;
+  email: string;
+  collegeName: string;
+  city: string;
+  state: string;
+  voteCount: number;
+  lastVoteAt: string | null;
+  isBlocked: boolean;
+  blockReason: string | null;
+  createdAt: string;
+}
+
 export default function AdminPage() {
   const { authenticated, user, login } = usePrivy();
   const [colleges, setColleges] = useState<College[]>([]);
+  const [users, setUsers] = useState<User[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isLoadingUsers, setIsLoadingUsers] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [isAdmin, setIsAdmin] = useState(false);
   const [checkingAdmin, setCheckingAdmin] = useState(true);
+  const [activeTab, setActiveTab] = useState<'colleges' | 'users'>('colleges');
 
   // Form state
   const [formData, setFormData] = useState({
@@ -44,6 +61,7 @@ export default function AdminPage() {
   useEffect(() => {
     checkAdminStatus();
     fetchColleges();
+    fetchUsers();
   }, [authenticated, user]);
 
   const checkAdminStatus = async () => {
@@ -79,6 +97,55 @@ export default function AdminPage() {
       console.error("Failed to fetch colleges:", error);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const fetchUsers = async () => {
+    if (!authenticated || !user?.email?.address) return;
+    
+    try {
+      const response = await fetch("/api/admin/users", {
+        headers: {
+          "x-admin-email": user.email.address,
+        },
+      });
+      const data = await response.json();
+      if (response.ok) {
+        setUsers(data.users);
+      }
+    } catch (error) {
+      console.error("Failed to fetch users:", error);
+    } finally {
+      setIsLoadingUsers(false);
+    }
+  };
+
+  const handleResetVotes = async (userEmail: string) => {
+    if (!confirm(`Reset vote limit for ${userEmail}? This will allow them to vote immediately.`)) {
+      return;
+    }
+
+    try {
+      const response = await fetch("/api/admin/users/reset-votes", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-admin-email": user?.email?.address || "",
+        },
+        body: JSON.stringify({ userEmail }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        toast.success("Vote limit reset successfully!");
+        fetchUsers(); // Refresh user list
+      } else {
+        toast.error(data.error || "Failed to reset vote limit");
+      }
+    } catch (error) {
+      console.error("Reset votes error:", error);
+      toast.error("Failed to reset vote limit");
     }
   };
 
@@ -211,7 +278,38 @@ export default function AdminPage() {
           Admin Dashboard
         </h1>
 
+        {/* Tabs */}
+        <div className="flex gap-2 mb-8 border-b border-gray-200 dark:border-gray-800">
+          <button
+            onClick={() => setActiveTab('colleges')}
+            className={`px-6 py-3 font-medium transition-all border-b-2 ${
+              activeTab === 'colleges'
+                ? 'border-blue-600 text-blue-600 dark:text-blue-400'
+                : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
+            }`}
+          >
+            <div className="flex items-center gap-2">
+              <Plus size={18} />
+              Colleges ({colleges.length})
+            </div>
+          </button>
+          <button
+            onClick={() => setActiveTab('users')}
+            className={`px-6 py-3 font-medium transition-all border-b-2 ${
+              activeTab === 'users'
+                ? 'border-blue-600 text-blue-600 dark:text-blue-400'
+                : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
+            }`}
+          >
+            <div className="flex items-center gap-2">
+              <Users size={18} />
+              Users ({users.length})
+            </div>
+          </button>
+        </div>
+
         {/* Add College Form */}
+        {activeTab === 'colleges' && (
         <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-6 mb-8">
           <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-6 flex items-center gap-2">
             <Plus size={24} />
@@ -355,8 +453,10 @@ export default function AdminPage() {
             </button>
           </form>
         </div>
+        )}
 
         {/* Colleges List */}
+        {activeTab === 'colleges' && (
         <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-6">
           <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-6">
             All Colleges ({colleges.length})
@@ -399,6 +499,80 @@ export default function AdminPage() {
             </div>
           )}
         </div>
+        )}
+
+        {/* Users List */}
+        {activeTab === 'users' && (
+        <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-6">
+          <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-6">
+            All Users ({users.length})
+          </h2>
+
+          {isLoadingUsers ? (
+            <div className="text-center py-8">
+              <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+            </div>
+          ) : users.length === 0 ? (
+            <p className="text-gray-600 dark:text-gray-400 text-center py-8">
+              No users registered yet
+            </p>
+          ) : (
+            <div className="space-y-4">
+              {users.map((u) => {
+                const canVoteAgain = u.lastVoteAt 
+                  ? new Date(u.lastVoteAt).getTime() + 24 * 60 * 60 * 1000 < Date.now()
+                  : true;
+                
+                return (
+                  <div
+                    key={u.id}
+                    className="flex items-center justify-between p-4 border border-gray-200 dark:border-gray-800 rounded-lg hover:border-gray-300 dark:hover:border-gray-700 transition-colors"
+                  >
+                    <div className="flex-1">
+                      <h3 className="font-bold text-gray-900 dark:text-white">
+                        {u.email}
+                      </h3>
+                      <p className="text-sm text-gray-600 dark:text-gray-400">
+                        {u.collegeName} • {u.city}, {u.state}
+                      </p>
+                      <div className="flex items-center gap-4 mt-2">
+                        <p className="text-sm text-gray-500 dark:text-gray-500">
+                          Votes today: {u.voteCount}/5
+                        </p>
+                        {u.lastVoteAt && (
+                          <p className={`text-xs ${
+                            canVoteAgain 
+                              ? 'text-green-600 dark:text-green-400' 
+                              : 'text-orange-600 dark:text-orange-400'
+                          }`}>
+                            {canVoteAgain 
+                              ? '✓ Can vote now' 
+                              : `⏱ Next vote: ${new Date(new Date(u.lastVoteAt).getTime() + 24 * 60 * 60 * 1000).toLocaleString()}`
+                            }
+                          </p>
+                        )}
+                        {u.isBlocked && (
+                          <span className="text-xs px-2 py-1 bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 rounded">
+                            Blocked: {u.blockReason}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => handleResetVotes(u.email)}
+                      className="flex items-center gap-2 px-4 py-2 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors text-sm font-medium"
+                      title="Reset daily vote limit"
+                    >
+                      <RefreshCw size={16} />
+                      Reset Votes
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+        )}
       </div>
     </div>
   );
