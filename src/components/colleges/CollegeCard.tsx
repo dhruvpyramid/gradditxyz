@@ -32,6 +32,8 @@ export function CollegeCard({ college, onVote }: CollegeCardProps) {
   const [localScore, setLocalScore] = useState(college.score);
   const [localVoteCount, setLocalVoteCount] = useState(college.voteCount);
   const [isHovered, setIsHovered] = useState(false);
+  const [voteAnimation, setVoteAnimation] = useState<'up' | 'down' | null>(null);
+  const [scoreAnimation, setScoreAnimation] = useState(false);
 
   const handleVote = async (voteType: 1 | -1) => {
     if (!authenticated || !user?.email?.address) {
@@ -65,8 +67,16 @@ export function CollegeCard({ college, onVote }: CollegeCardProps) {
         return;
       }
 
+      // Trigger vote animation
+      setVoteAnimation(voteType === 1 ? 'up' : 'down');
+      setTimeout(() => setVoteAnimation(null), 600);
+      
       // Update local state
       setLocalUserVote(voteType === 1 ? "up" : "down");
+      
+      // Animate score change
+      setScoreAnimation(true);
+      setTimeout(() => setScoreAnimation(false), 500);
       
       // Update score and vote count if available, otherwise refresh
       if (data.college) {
@@ -74,7 +84,14 @@ export function CollegeCard({ college, onVote }: CollegeCardProps) {
         setLocalVoteCount(data.college.voteCount);
       }
       
-      toast.success("Vote submitted!");
+      // Haptic feedback (mobile)
+      if (navigator.vibrate) {
+        navigator.vibrate(50);
+      }
+      
+      toast.success(voteType === 1 ? "Upvoted! 🎉" : "Downvoted", {
+        duration: 2000,
+      });
       
       // Always trigger refresh to get latest data
       if (onVote) onVote();
@@ -158,10 +175,19 @@ export function CollegeCard({ college, onVote }: CollegeCardProps) {
 
         {/* Voting Section */}
         <div className="flex items-center justify-between pt-4 border-t border-gray-200/50 dark:border-white/[0.08]">
-          <div className="flex flex-col">
-            <span className="text-2xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 dark:from-white dark:to-gray-300 bg-clip-text text-transparent">
+          <div className="flex flex-col relative">
+            <span className={`text-2xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 dark:from-white dark:to-gray-300 bg-clip-text text-transparent transition-all duration-300 ${
+              scoreAnimation ? 'scale-125' : 'scale-100'
+            }`}>
               {localScore.toFixed(1)}
             </span>
+            {voteAnimation && (
+              <span className={`absolute -top-6 left-1/2 -translate-x-1/2 text-2xl font-bold animate-voteFloat ${
+                voteAnimation === 'up' ? 'text-emerald-500' : 'text-red-500'
+              }`}>
+                {voteAnimation === 'up' ? '+1' : '-1'}
+              </span>
+            )}
             <span className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
               {localVoteCount} {localVoteCount === 1 ? 'vote' : 'votes'}
             </span>
@@ -171,12 +197,17 @@ export function CollegeCard({ college, onVote }: CollegeCardProps) {
             <button
               onClick={() => handleVote(1)}
               disabled={isVoting}
-              className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-sm font-medium transition-all duration-200 ${
+              className={`relative flex items-center gap-2 px-3.5 py-2 rounded-xl text-sm font-medium transition-all duration-200 overflow-hidden ${
                 localUserVote === "up"
                   ? "bg-emerald-100 dark:bg-emerald-500/30 text-emerald-700 dark:text-emerald-300 ring-1 ring-emerald-500/30 dark:ring-emerald-500/50"
                   : "bg-white dark:bg-white/[0.05] text-emerald-600/60 dark:text-emerald-400/60 shadow-[0_2px_4px_rgba(0,0,0,0.02)] dark:shadow-none hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-emerald-50/50 dark:hover:bg-emerald-500/10"
-              } ${isVoting && "cursor-not-allowed opacity-50"}`}
+              } ${isVoting && "cursor-not-allowed opacity-50"} ${
+                voteAnimation === 'up' ? 'animate-votePulse' : ''
+              }`}
             >
+              {voteAnimation === 'up' && (
+                <span className="absolute inset-0 bg-emerald-400/30 animate-ripple" />
+              )}
               <svg
                 className="h-4 w-4"
                 viewBox="0 0 24 24"
@@ -191,12 +222,17 @@ export function CollegeCard({ college, onVote }: CollegeCardProps) {
             <button
               onClick={() => handleVote(-1)}
               disabled={isVoting}
-              className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-sm font-medium transition-all duration-200 ${
+              className={`relative flex items-center gap-2 px-3.5 py-2 rounded-xl text-sm font-medium transition-all duration-200 overflow-hidden ${
                 localUserVote === "down"
                   ? "bg-red-100 dark:bg-red-500/30 text-red-700 dark:text-red-300 ring-1 ring-red-500/30 dark:ring-red-500/50"
                   : "bg-white dark:bg-white/[0.05] text-red-600/60 dark:text-red-400/60 shadow-[0_2px_4px_rgba(0,0,0,0.02)] dark:shadow-none hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50/50 dark:hover:bg-red-500/10"
-              } ${isVoting && "cursor-not-allowed opacity-50"}`}
+              } ${isVoting && "cursor-not-allowed opacity-50"} ${
+                voteAnimation === 'down' ? 'animate-votePulse' : ''
+              }`}
             >
+              {voteAnimation === 'down' && (
+                <span className="absolute inset-0 bg-red-400/30 animate-ripple" />
+              )}
               <svg
                 className="h-4 w-4"
                 viewBox="0 0 24 24"
@@ -216,6 +252,39 @@ export function CollegeCard({ college, onVote }: CollegeCardProps) {
           0% { background-position: 0% 50%; }
           50% { background-position: 100% 50%; }
           100% { background-position: 0% 50%; }
+        }
+        @keyframes voteFloat {
+          0% {
+            opacity: 1;
+            transform: translate(-50%, 0) scale(1);
+          }
+          100% {
+            opacity: 0;
+            transform: translate(-50%, -30px) scale(1.5);
+          }
+        }
+        @keyframes votePulse {
+          0%, 100% { transform: scale(1); }
+          50% { transform: scale(1.1); }
+        }
+        @keyframes ripple {
+          0% {
+            transform: scale(0);
+            opacity: 1;
+          }
+          100% {
+            transform: scale(2.5);
+            opacity: 0;
+          }
+        }
+        .animate-voteFloat {
+          animation: voteFloat 0.6s ease-out forwards;
+        }
+        .animate-votePulse {
+          animation: votePulse 0.3s ease-in-out;
+        }
+        .animate-ripple {
+          animation: ripple 0.6s ease-out forwards;
         }
       `}</style>
     </div>
