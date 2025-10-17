@@ -1,11 +1,9 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState } from "react";
 import { MapPin, Globe, ExternalLink } from "lucide-react";
 import { usePrivy } from "@privy-io/react-auth";
 import { toast } from "sonner";
-import { Glowing } from "glowing";
-import "glowing/dist/index.css";
 
 interface College {
   id: number;
@@ -33,43 +31,7 @@ export function CollegeCard({ college, onVote }: CollegeCardProps) {
   const [localUserVote, setLocalUserVote] = useState(college.userVote);
   const [localScore, setLocalScore] = useState(college.score);
   const [localVoteCount, setLocalVoteCount] = useState(college.voteCount);
-  const cardRef = useRef<HTMLDivElement>(null);
-  const glowingRef = useRef<Glowing | null>(null);
-
-  // Initialize glowing effect
-  useEffect(() => {
-    if (cardRef.current && !glowingRef.current) {
-      glowingRef.current = new Glowing(cardRef.current, {
-        rotationDuration: 3000,
-        width: 2,
-        blendMode: 'screen',
-        colors: ['rgba(96, 165, 250, 0.5)', 'rgba(168, 85, 247, 0.5)', 'rgba(236, 72, 153, 0.5)'],
-        colors2: ['rgba(255, 255, 255, 0.3)', 'transparent', 'transparent', 'rgba(255, 255, 255, 0.3)'],
-        glowingBlurRatio: 1.2,
-        borderRadius: 16,
-      });
-      glowingRef.current.hide(); // Start hidden
-    }
-
-    return () => {
-      if (glowingRef.current) {
-        glowingRef.current.remove();
-        glowingRef.current = null;
-      }
-    };
-  }, []);
-
-  const handleMouseEnter = () => {
-    if (glowingRef.current) {
-      glowingRef.current.show();
-    }
-  };
-
-  const handleMouseLeave = () => {
-    if (glowingRef.current) {
-      glowingRef.current.hide();
-    }
-  };
+  const [isHovered, setIsHovered] = useState(false);
 
   const handleVote = async (voteType: 1 | -1) => {
     if (!authenticated || !user?.email?.address) {
@@ -126,9 +88,8 @@ export function CollegeCard({ college, onVote }: CollegeCardProps) {
 
   return (
     <div
-      ref={cardRef}
-      onMouseEnter={handleMouseEnter}
-      onMouseLeave={handleMouseLeave}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
       className="group relative overflow-hidden rounded-2xl transition-all duration-300 hover:scale-[1.02]"
       style={{
         background: 'linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.05) 100%)',
@@ -138,6 +99,23 @@ export function CollegeCard({ college, onVote }: CollegeCardProps) {
         boxShadow: '0 8px 32px 0 rgba(31, 38, 135, 0.15)',
       }}
     >
+      {/* Animated glow border effect */}
+      <div
+        className={`absolute inset-0 rounded-2xl opacity-0 transition-opacity duration-500 pointer-events-none ${
+          isHovered ? 'opacity-100' : 'opacity-0'
+        }`}
+        style={{
+          background: 'linear-gradient(90deg, rgba(96, 165, 250, 0.5), rgba(168, 85, 247, 0.5), rgba(236, 72, 153, 0.5), rgba(96, 165, 250, 0.5))',
+          backgroundSize: '300% 100%',
+          animation: isHovered ? 'gradientShift 3s ease infinite' : 'none',
+          padding: '2px',
+          WebkitMask: 'linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)',
+          WebkitMaskComposite: 'xor',
+          maskComposite: 'exclude',
+          filter: 'blur(4px)',
+        }}
+      />
+
       {/* Category Badge */}
       <div className="absolute top-4 right-4 z-10">
         <span className="px-3 py-1 text-xs font-medium rounded-full bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-500/10 dark:to-purple-500/10 text-blue-700 dark:text-blue-300 border border-blue-200/50 dark:border-blue-500/20">
@@ -232,6 +210,14 @@ export function CollegeCard({ college, onVote }: CollegeCardProps) {
           </div>
         </div>
       </div>
+
+      <style jsx>{`
+        @keyframes gradientShift {
+          0% { background-position: 0% 50%; }
+          50% { background-position: 100% 50%; }
+          100% { background-position: 0% 50%; }
+        }
+      `}</style>
     </div>
   );
 }
