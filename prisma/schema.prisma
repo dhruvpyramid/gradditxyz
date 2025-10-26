@@ -12,10 +12,12 @@ model User {
   email           String   @unique
   emailVerified   Boolean  @default(false)
   hashedUserId    String   @unique
-  college         String
-  collegeName     String
-  city            String
-  state           String
+  college         String?
+  collegeName     String?
+  city            String?
+  state           String?
+  profileCompleted Boolean @default(false)
+  hasSeenOnboarding Boolean @default(false)
   voteCount       Int      @default(0)
   isBlocked       Boolean  @default(false)
   blockReason     String?

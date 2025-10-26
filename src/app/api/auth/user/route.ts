@@ -23,6 +23,8 @@ export async function GET(req: NextRequest) {
         collegeName: true,
         city: true,
         state: true,
+        profileCompleted: true,
+        hasSeenOnboarding: true,
         voteCount: true,
         isBlocked: true,
         blockReason: true,

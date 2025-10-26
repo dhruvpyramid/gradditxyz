@@ -105,6 +105,7 @@ export function CollegeCard({ college, onVote }: CollegeCardProps) {
 
   return (
     <div
+      data-tour="college-card"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       className="group relative overflow-hidden rounded-2xl transition-all duration-300 hover:scale-[1.02]"
@@ -193,7 +194,7 @@ export function CollegeCard({ college, onVote }: CollegeCardProps) {
             </span>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2" data-tour="vote-buttons">
             <button
               onClick={() => handleVote(1)}
               disabled={isVoting}
