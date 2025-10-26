@@ -153,9 +153,10 @@ export async function POST(req: NextRequest) {
     }
 
     // Calculate vote weight
+    // Use empty string as fallback if collegeName or state is null (should not happen after profile completion)
     const weight = calculateWeight(
-      user.collegeName,
-      user.state,
+      user.collegeName || "",
+      user.state || "",
       college.name,
       college.state
     );
