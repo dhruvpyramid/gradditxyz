@@ -125,8 +125,9 @@ export function OnboardingTour({ onComplete }: OnboardingTourProps) {
 
   // Calculate tooltip position
   const getTooltipPosition = () => {
-    const padding = 20;
-    const tooltipWidth = 360;
+    const padding = 10;
+    const isMobile = window.innerWidth < 640;
+    const tooltipWidth = isMobile ? window.innerWidth - 40 : 360;
     const tooltipHeight = 200;
 
     let top = targetPosition.top;
@@ -191,11 +192,11 @@ export function OnboardingTour({ onComplete }: OnboardingTourProps) {
 
       {/* Tooltip */}
       <div
-        className="fixed z-[10000] bg-white dark:bg-gray-900 rounded-2xl shadow-2xl p-6 max-w-sm animate-fade-in border border-gray-200 dark:border-gray-700"
+        className="fixed z-[10000] bg-white dark:bg-gray-900 rounded-2xl shadow-2xl p-4 sm:p-6 w-[calc(100vw-2rem)] sm:max-w-sm animate-fade-in border border-gray-200 dark:border-gray-700"
         style={{
           top: tooltipPos.top,
           left: tooltipPos.left,
-          minHeight: "200px",
+          minHeight: "180px",
         }}
       >
         {/* Close Button */}
@@ -207,11 +208,11 @@ export function OnboardingTour({ onComplete }: OnboardingTourProps) {
         </button>
 
         {/* Content */}
-        <div className="pr-8">
-          <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-3">
+        <div className="pr-6 sm:pr-8">
+          <h3 className="text-base sm:text-xl font-bold text-gray-900 dark:text-white mb-2 sm:mb-3">
             {step.title}
           </h3>
-          <p className="text-gray-600 dark:text-gray-300 text-sm leading-relaxed mb-6">
+          <p className="text-gray-600 dark:text-gray-300 text-xs sm:text-sm leading-relaxed mb-4 sm:mb-6">
             {step.description}
           </p>
         </div>
@@ -239,14 +240,14 @@ export function OnboardingTour({ onComplete }: OnboardingTourProps) {
             {!isFirstStep && (
               <button
                 onClick={handlePrevious}
-                className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
+                className="px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
               >
                 Back
               </button>
             )}
             <button
               onClick={handleNext}
-              className="px-5 py-2 text-sm font-semibold bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white rounded-lg shadow-md transition-all"
+              className="px-4 sm:px-5 py-1.5 sm:py-2 text-xs sm:text-sm font-semibold bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white rounded-lg shadow-md transition-all"
             >
               {isLastStep ? "Get Started!" : "Next"}
             </button>
