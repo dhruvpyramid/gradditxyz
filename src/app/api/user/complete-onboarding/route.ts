@@ -19,16 +19,35 @@ export async function POST(req: NextRequest) {
     }
 
     // Verify the user with Privy
-    const verifiedClaims = await privy.verifyAuthToken(authToken);
+    let verifiedClaims;
+    try {
+      verifiedClaims = await privy.verifyAuthToken(authToken);
+    } catch (error) {
+      console.error("Privy token verification failed:", error);
+      return NextResponse.json(
+        { error: "Session expired. Please login again." },
+        { status: 401 }
+      );
+    }
     const privyUserId = verifiedClaims.userId;
 
     if (!privyUserId) {
       return NextResponse.json({ error: "Invalid token" }, { status: 401 });
     }
 
+    const privyUser = await privy.getUserById(privyUserId);
+    const email = privyUser.email?.address;
+
+    if (!email) {
+      return NextResponse.json(
+        { error: "Email not found" },
+        { status: 400 }
+      );
+    }
+
     // Update user to mark onboarding as complete
     const user = await prisma.user.update({
-      where: { hashedUserId: privyUserId },
+      where: { email },
       data: {
         hasSeenOnboarding: true,
       },

@@ -110,6 +110,18 @@ export function OnboardingTour({ onComplete }: OnboardingTourProps) {
     handleComplete();
   };
 
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        handleSkip();
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, []);
+
   const handleComplete = () => {
     setIsVisible(false);
     setTimeout(() => {
@@ -125,10 +137,10 @@ export function OnboardingTour({ onComplete }: OnboardingTourProps) {
 
   // Calculate tooltip position
   const getTooltipPosition = () => {
-    const padding = 10;
-    const isMobile = window.innerWidth < 640;
-    const tooltipWidth = isMobile ? window.innerWidth - 40 : 360;
-    const tooltipHeight = 200;
+    const padding = 16;
+    const isMobile = window.innerWidth < 768;
+    const tooltipWidth = isMobile ? window.innerWidth - 32 : 420;
+    const tooltipHeight = isMobile ? 'auto' : 240;
 
     let top = targetPosition.top;
     let left = targetPosition.left;
@@ -139,30 +151,31 @@ export function OnboardingTour({ onComplete }: OnboardingTourProps) {
         left = targetPosition.left + targetPosition.width / 2 - tooltipWidth / 2;
         break;
       case "top":
-        top = targetPosition.top - tooltipHeight - padding;
+        top = targetPosition.top - (typeof tooltipHeight === 'number' ? tooltipHeight : 240) - padding;
         left = targetPosition.left + targetPosition.width / 2 - tooltipWidth / 2;
         break;
       case "left":
-        top = targetPosition.top + targetPosition.height / 2 - tooltipHeight / 2;
+        top = targetPosition.top + targetPosition.height / 2 - (typeof tooltipHeight === 'number' ? tooltipHeight : 240) / 2;
         left = targetPosition.left - tooltipWidth - padding;
         break;
       case "right":
-        top = targetPosition.top + targetPosition.height / 2 - tooltipHeight / 2;
+        top = targetPosition.top + targetPosition.height / 2 - (typeof tooltipHeight === 'number' ? tooltipHeight : 240) / 2;
         left = targetPosition.left + targetPosition.width + padding;
         break;
       default:
-        top = window.innerHeight / 2 - tooltipHeight / 2;
+        top = window.innerHeight / 2 - (typeof tooltipHeight === 'number' ? tooltipHeight : 240) / 2;
         left = window.innerWidth / 2 - tooltipWidth / 2;
     }
 
     // Keep tooltip within viewport
-    if (left < 20) left = 20;
-    if (left + tooltipWidth > window.innerWidth - 20) {
-      left = window.innerWidth - tooltipWidth - 20;
+    if (left < 16) left = 16;
+    if (left + tooltipWidth > window.innerWidth - 16) {
+      left = window.innerWidth - tooltipWidth - 16;
     }
-    if (top < 20) top = 20;
-    if (top + tooltipHeight > window.innerHeight + window.scrollY - 20) {
-      top = window.innerHeight + window.scrollY - tooltipHeight - 20;
+    if (top < 16) top = 16;
+    const tooltipNumericHeight = typeof tooltipHeight === 'number' ? tooltipHeight : 280;
+    if (top + tooltipNumericHeight > window.innerHeight + window.scrollY - 16) {
+      top = window.innerHeight + window.scrollY - tooltipNumericHeight - 16;
     }
 
     return { top, left };
@@ -173,7 +186,11 @@ export function OnboardingTour({ onComplete }: OnboardingTourProps) {
   return (
     <>
       {/* Dark Overlay */}
-      <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[9998] animate-fade-in" />
+      <div
+        className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[9998] animate-fade-in cursor-pointer"
+        onClick={handleSkip}
+        role="presentation"
+      />
 
       {/* Spotlight - Highlight target element */}
       {step.target !== "body" && (
@@ -192,27 +209,28 @@ export function OnboardingTour({ onComplete }: OnboardingTourProps) {
 
       {/* Tooltip */}
       <div
-        className="fixed z-[10000] bg-white dark:bg-gray-900 rounded-2xl shadow-2xl p-4 sm:p-6 w-[calc(100vw-2rem)] sm:max-w-sm animate-fade-in border border-gray-200 dark:border-gray-700"
+        className="fixed z-[10000] bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl rounded-3xl shadow-[0_20px_60px_rgba(15,23,42,0.25)] p-5 sm:p-7 w-[calc(100vw-2.5rem)] sm:max-w-md animate-fade-in border border-white/30 dark:border-white/10"
         style={{
           top: tooltipPos.top,
           left: tooltipPos.left,
-          minHeight: "180px",
+          minHeight: "200px",
         }}
       >
         {/* Close Button */}
         <button
           onClick={handleSkip}
-          className="absolute top-4 right-4 p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+          className="absolute top-4 right-4 p-1.5 rounded-xl bg-white/40 dark:bg-white/10 hover:bg-white/60 dark:hover:bg-white/20 transition-colors"
         >
-          <X className="w-5 h-5 text-gray-500" />
+          <X className="w-4 h-4 text-gray-600 dark:text-gray-300" />
         </button>
 
         {/* Content */}
-        <div className="pr-6 sm:pr-8">
-          <h3 className="text-base sm:text-xl font-bold text-gray-900 dark:text-white mb-2 sm:mb-3">
+        <div className="pr-8">
+          <div className="text-xs uppercase tracking-[0.2em] text-gray-500 dark:text-gray-400 mb-2">Step {currentStep + 1} / {TOUR_STEPS.length}</div>
+          <h3 className="text-lg sm:text-2xl font-semibold text-gray-900 dark:text-white mb-2">
             {step.title}
           </h3>
-          <p className="text-gray-600 dark:text-gray-300 text-xs sm:text-sm leading-relaxed mb-4 sm:mb-6">
+          <p className="text-gray-700 dark:text-gray-200 text-sm sm:text-base leading-relaxed mb-5">
             {step.description}
           </p>
         </div>
@@ -220,34 +238,40 @@ export function OnboardingTour({ onComplete }: OnboardingTourProps) {
         {/* Progress & Controls */}
         <div className="flex items-center justify-between mt-4">
           {/* Progress Dots */}
-          <div className="flex gap-1.5">
+          <div className="flex gap-2">
             {TOUR_STEPS.map((_, index) => (
               <div
                 key={index}
-                className={`h-2 rounded-full transition-all ${
+                className={`h-1.5 rounded-full transition-all duration-300 ${
                   index === currentStep
-                    ? "w-8 bg-blue-500"
+                    ? "w-8 bg-gradient-to-r from-blue-500 to-purple-500"
                     : index < currentStep
-                    ? "w-2 bg-blue-300"
-                    : "w-2 bg-gray-300 dark:bg-gray-600"
+                    ? "w-4 bg-blue-300/80"
+                    : "w-3 bg-gray-300/70 dark:bg-gray-600/60"
                 }`}
               />
             ))}
           </div>
 
           {/* Navigation Buttons */}
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2 items-center justify-end">
             {!isFirstStep && (
               <button
                 onClick={handlePrevious}
-                className="px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
+                className="px-3.5 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 bg-white/60 dark:bg-white/5 hover:bg-white/80 dark:hover:bg-white/10 rounded-xl border border-white/80 dark:border-white/10 transition-colors"
               >
                 Back
               </button>
             )}
             <button
+              onClick={handleSkip}
+              className="px-3 sm:px-4 py-1.5 text-xs sm:text-sm font-medium text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"
+            >
+              Skip tour
+            </button>
+            <button
               onClick={handleNext}
-              className="px-4 sm:px-5 py-1.5 sm:py-2 text-xs sm:text-sm font-semibold bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white rounded-lg shadow-md transition-all"
+              className="px-4 sm:px-6 py-1.5 sm:py-2 text-xs sm:text-sm font-semibold bg-gradient-to-r from-blue-600/90 via-purple-600/90 to-pink-500/90 hover:from-blue-600 hover:to-pink-500 text-white rounded-xl shadow-[0_10px_25px_rgba(59,130,246,0.35)] transition-all"
             >
               {isLastStep ? "Get Started!" : "Next"}
             </button>
@@ -255,8 +279,8 @@ export function OnboardingTour({ onComplete }: OnboardingTourProps) {
         </div>
 
         {/* Step Counter */}
-        <p className="text-xs text-gray-400 text-center mt-4">
-          Step {currentStep + 1} of {TOUR_STEPS.length}
+        <p className="text-xs text-gray-500 dark:text-gray-400 text-center mt-4 tracking-wide">
+          {currentStep + 1} / {TOUR_STEPS.length}
         </p>
       </div>
     </>

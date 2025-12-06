@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import { usePrivy } from "@privy-io/react-auth";
 import { INDIAN_STATES } from "@/data/indian-states";
 
 interface ProfileCompletionModalProps {
@@ -15,6 +16,7 @@ interface CollegeSuggestion {
 }
 
 export function ProfileCompletionModal({ userEmail, onComplete }: ProfileCompletionModalProps) {
+  const { getAccessToken } = usePrivy();
   const [collegeName, setCollegeName] = useState("");
   const [city, setCity] = useState("");
   const [state, setState] = useState("");
@@ -76,16 +78,21 @@ export function ProfileCompletionModal({ userEmail, onComplete }: ProfileComplet
     setLoading(true);
 
     try {
-      // Get auth token from localStorage (Privy stores it there)
-      const authToken = localStorage.getItem("privy:token");
-      
+      const authToken = await getAccessToken(); // fetch fresh Privy token to avoid stale localStorage values
+
+      if (!authToken) {
+        setError("Session expired. Please login again.");
+        setLoading(false);
+        return;
+      }
+
       const response = await fetch("/api/user/complete-profile", {
         method: "POST",
         headers: { 
           "Content-Type": "application/json",
           "Authorization": `Bearer ${authToken}`,
         },
-        body: JSON.stringify({ collegeName, city, state }),
+        body: JSON.stringify({ collegeName, city, state, email: userEmail }),
       });
 
       const data = await response.json();

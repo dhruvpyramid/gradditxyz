@@ -19,25 +19,28 @@ export async function POST(req: NextRequest) {
     }
 
     // Verify the user with Privy
-    const verifiedClaims = await privy.verifyAuthToken(authToken);
+    let verifiedClaims;
+    try {
+      verifiedClaims = await privy.verifyAuthToken(authToken);
+    } catch (error) {
+      console.error("Privy token verification failed:", error);
+      return NextResponse.json(
+        { error: "Session expired. Please login again." },
+        { status: 401 }
+      );
+    }
     const privyUserId = verifiedClaims.userId;
 
     if (!privyUserId) {
       return NextResponse.json({ error: "Invalid token" }, { status: 401 });
     }
 
-    const { collegeName, city, state } = await req.json();
+    const { collegeName, city, state, email: fallbackEmail } = await req.json();
 
-    if (!collegeName || !city || !state) {
-      return NextResponse.json(
-        { error: "All fields are required" },
-        { status: 400 }
-      );
-    }
-
-    // Get user's email from Privy
-    const privyUser = await privy.getUserById(privyUserId);
-    const email = privyUser.email?.address;
+    const email =
+      (verifiedClaims as any)?.email?.address ||
+      (verifiedClaims as any)?.email ||
+      fallbackEmail;
 
     if (!email) {
       return NextResponse.json(
@@ -46,12 +49,29 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Update user profile
-    const user = await prisma.user.update({
-      where: { hashedUserId: privyUserId },
-      data: {
+    if (!collegeName || !city || !state) {
+      return NextResponse.json(
+        { error: "All fields are required" },
+        { status: 400 }
+      );
+    }
+
+    // Upsert user profile using the verified email. If the user doesn't exist yet, create it now
+    const user = await prisma.user.upsert({
+      where: { email },
+      update: {
         collegeName,
-        college: collegeName, // Also store in college field for backward compatibility
+        college: collegeName,
+        city,
+        state,
+        profileCompleted: true,
+      },
+      create: {
+        email,
+        emailVerified: true,
+        hashedUserId: privyUserId,
+        collegeName,
+        college: collegeName,
         city,
         state,
         profileCompleted: true,

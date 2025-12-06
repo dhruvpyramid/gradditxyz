@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { usePrivy } from "@privy-io/react-auth";
 import { ProfileCompletionModal } from "./ProfileCompletionModal";
 import { OnboardingTour } from "../tour/OnboardingTour";
+import { ADMIN_EMAIL } from "@/constants/admin";
 
 export function AuthHandler() {
   const { authenticated, user, getAccessToken } = usePrivy();
@@ -12,33 +13,40 @@ export function AuthHandler() {
   const [userEmail, setUserEmail] = useState("");
 
   useEffect(() => {
-    if (authenticated && user?.email?.address) {
-      setUserEmail(user.email.address);
-      
-      // Check if user profile is completed
-      fetch("/api/auth/user", {
-        headers: { "x-user-email": user.email.address },
-      })
-        .then((res) => res.json())
-        .then((data) => {
-          if (!data.user) {
-            // New user - show profile completion
-            setShowProfileCompletion(true);
-          } else if (!data.user.profileCompleted) {
-            // Existing user but profile not completed - force completion
-            setShowProfileCompletion(true);
-          } else if (!data.user.hasSeenOnboarding) {
-            // User has completed profile but not seen onboarding tour
-            // Wait a bit for the page to load before showing tour
-            setTimeout(() => {
-              setShowOnboardingTour(true);
-            }, 1000);
-          }
-        })
-        .catch((err) => {
-          console.error("Error checking user:", err);
-        });
+    if (!authenticated || !user?.email?.address) return;
+
+    const currentEmail = user.email.address;
+    setUserEmail(currentEmail);
+
+    if (currentEmail.toLowerCase() === ADMIN_EMAIL.toLowerCase()) {
+      setShowProfileCompletion(false);
+      setShowOnboardingTour(false);
+      return;
     }
+
+    // Check if user profile is completed
+    fetch("/api/auth/user", {
+      headers: { "x-user-email": currentEmail },
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        if (!data.user) {
+          // New user - show profile completion
+          setShowProfileCompletion(true);
+        } else if (!data.user.profileCompleted) {
+          // Existing user but profile not completed - force completion
+          setShowProfileCompletion(true);
+        } else if (!data.user.hasSeenOnboarding) {
+          // User has completed profile but not seen onboarding tour
+          // Wait a bit for the page to load before showing tour
+          setTimeout(() => {
+            setShowOnboardingTour(true);
+          }, 1000);
+        }
+      })
+      .catch((err) => {
+        console.error("Error checking user:", err);
+      });
   }, [authenticated, user?.email?.address]);
 
   const handleProfileComplete = async (profileData: {
@@ -59,7 +67,9 @@ export function AuthHandler() {
     
     // Save to database that user has completed onboarding
     try {
-      const authToken = localStorage.getItem("privy:token");
+      const authToken = await getAccessToken();
+      if (!authToken) return;
+
       await fetch("/api/user/complete-onboarding", {
         method: "POST",
         headers: {

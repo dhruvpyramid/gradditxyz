@@ -9,18 +9,18 @@
   "icons": [
     {
       "src": "/favico.png",
-      "sizes": "64x64 32x32 24x24 16x16",
+      "sizes": "80x80",
       "type": "image/png"
     },
     {
-      "src": "/favico.png",
+      "src": "/gradditlogo.png",
       "sizes": "180x180",
       "type": "image/png",
-      "purpose": "maskable"
+      "purpose": "maskable any"
     },
     {
-      "src": "/favico.png",
-      "sizes": "192x192",
+      "src": "/gradditlogo.png",
+      "sizes": "512x512",
       "type": "image/png",
       "purpose": "any"
     }
